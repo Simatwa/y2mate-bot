@@ -51,8 +51,8 @@ usage_info = (
     "/video - Download video  🎬 \n"
     "/quality - Set new video quality.\n\n"
     "Just append video title/id/url to these commands.\n\n"
-    f"Telegram downloads will be possible for files under {file_size_limit}MB\n\n"
-    "Made with love by [Smartwa](https://github.com/Simatwa) from Kenya 🇰🇪"
+    f"Telegram downloads will be possible for files under {file_size_limit}MB.\n\n"
+    "Made with love by [Smartwa](https://github.com/Simatwa) from Kenya 🇰🇪."
 )
 
 cache_dir = appdir.user_cache_dir
@@ -84,9 +84,9 @@ def get_thumbnail(video_id):
 
 
 def is_within_size_limit(third_dict: dict) -> bool:
-    """Checks if media file is within the limits"""
-    size = third_dict.get("size", "500 MB").split(" ")[0]
-    return float(size) <= file_size_limit
+    """Checks if media file is within the  size limit"""
+    size: str = third_dict.get("size", "MB").split(" ")[0]
+    return False if not size.isdigit() else float(size) <= file_size_limit
 
 
 def make_media_info(meta: dict) -> str:
@@ -94,8 +94,10 @@ def make_media_info(meta: dict) -> str:
         f"Title : {meta.get('title')}\n"
         f"Size : {meta.get('size')}\n"
         f"Quality : {meta.get('q')}({meta.get('f')})\n"
+        f"Author : {meta.get('author')}\n"
         f"Video ID : {meta.get('vid')}\n"
-        f"Download : [Click Me]({meta.get('dlink')})"
+        f"Download : [Link]({meta.get('dlink')})\n"
+        f"Uploading : {'Yes' if meta.get('download_required') else 'No'}"
     )
     return info
 
@@ -115,25 +117,32 @@ def download_and_send_audio_file(message: Message):
     fq = first_query(query).main()
     sq = second_query(fq).main()
     third_dict = third_query(sq).main(format="mp3")
+
+    download_required = is_within_size_limit(third_dict)
+    third_dict["download_required"] = download_required
+    third_dict["author"] = sq.raw.get("a")
+
     metadata["AUDIO_DOWNLOADS"] += 1
     bot.send_message(
         message.chat.id,
         make_media_info(third_dict),
         parse_mode="Markdown",
     )
-    if not is_within_size_limit(third_dict):
+
+    if not download_required:
         return
 
-    bot.send_chat_action(message.chat.id, "upload_audio")
     try:
         saved_to = handler.save(
             third_dict, cache_dir, progress_bar=False, disable_history=True
         )
+        bot.send_chat_action(message.chat.id, "upload_audio", 3)
         bot.send_audio(
             message.chat.id,
             open(saved_to, "rb"),
             thumbnail=get_thumbnail(third_dict.get("vid")),
             title=third_dict.get("title", "Unknown title"),
+            performer=sq.raw.get("a"),
         )
     except Exception as e:
         bot.reply_to(
@@ -156,19 +165,24 @@ def download_and_send_video_file(message: Message):
     sq = second_query(fq).main()
     user_video_quality = quality.get(message.from_user.id, "720p")
     third_dict = third_query(sq).main(format="mp4", quality=user_video_quality)
+
+    download_required = is_within_size_limit(third_dict)
+    third_dict["download_required"] = download_required
+    third_dict["author"] = sq.raw.get("a")
+
     metadata["VIDEO_DOWNLOADS"] += 1
     bot.send_message(
         message.chat.id, make_media_info(third_dict), parse_mode="Markdown"
     )
 
-    if not is_within_size_limit(third_dict):
+    if not download_required:
         return
 
-    bot.send_chat_action(message.chat.id, "upload_video")
     try:
         saved_to = handler.save(
             third_dict, cache_dir, progress_bar=False, disable_history=True
         )
+        bot.send_chat_action(message.chat.id, "upload_video", 3)
         bot.send_video(
             message.chat.id,
             open(saved_to, "rb"),
@@ -213,9 +227,9 @@ def echo_user_telegram_id(message: Message):
     bot.reply_to(message, f"Your telegram ID is : {message.from_user.id}")
 
 
-@bot.message_handler(func=lambda: True)
+@bot.message_handler(func=lambda msg: True)
 def any_other_action(message: Message):
-    """ "Unknown action"""
+    """Undefine action"""
     bot.reply_to(message, usage_info, parse_mode="Markdown")
 
 
