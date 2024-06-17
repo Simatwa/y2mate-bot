@@ -1,2 +1,3 @@
 pytelegrambotapi==4.17.0
 python-dotenv==1.0.0
+y2mate-api==1.0.5

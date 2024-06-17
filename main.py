@@ -59,6 +59,16 @@ def text_is_required(func):
     return decorator
 
 
+def make_media_info(meta: dict) -> str:
+    info = (
+        f"Title : {meta.get('title')}\n"
+        f"Size : {meta.get('size')}\n"
+        f"Quality : {meta.get('q_text')}\n"
+        f"dlink : {meta.get('dlink')}"
+    )
+    return info
+
+
 @bot.message_handler(commands=["start"])
 def echo_usage_info(message: Message):
     """Send back usage info"""
@@ -72,12 +82,12 @@ def download_and_send_audio_file(message: Message):
     """Sends audio version of a video"""
     query = extract_arguments(message.text)
     fq = first_query(query).main()
-    sq = second_query(query).main()
+    sq = second_query(fq).main()
     third_dict = third_query(sq).main(format="mp3")
     metadata["AUDIO_DOWNLOADS"] += 1
     return bot.send_message(
         message.chat.id,
-        f"Title : {third_dict['title']} \n Link : {third_dict['dlink']}",
+        make_media_info(third_dict),
     )
 
 
@@ -87,12 +97,12 @@ def download_and_send_video_file(message: Message):
     """Sends video"""
     query = extract_arguments(message.text)
     fq = first_query(query).main()
-    sq = second_query(query).main()
+    sq = second_query(fq).main()
     user_video_quality = quality.get(message.from_user.id, "720p")
     third_dict = third_query(sq).main(format="mp4", quality=user_video_quality)
     return bot.send_message(
         message.chat.id,
-        f"Title : {third_dict['title']} \nQuality: {user_video_quality}\nLink : {third_dict['dlink']}",
+        make_media_info(third_dict),
     )
 
 
@@ -112,7 +122,9 @@ def set_new_video_quality(message: Message):
 
 @bot.message_handler(commands=["stats"], is_admin=True)
 def show_users_count_to_admin(message: Message):
-    bot.send_message(message.chat.id, f"```json\n{dumps(metadata)}\n```")
+    bot.send_message(
+        message.chat.id, f"```json\n{dumps(metadata, indent=4)}\n```", "Markdown"
+    )
 
 
 @bot.message_handler(commands=["myid"])
