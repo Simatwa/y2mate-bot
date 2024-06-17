@@ -6,6 +6,7 @@ from y2mate_api import first_query, second_query, third_query, appdir, Handler
 from dotenv import load_dotenv
 from os import getenv, remove
 from json import dumps
+import requests
 
 load_dotenv()
 
@@ -13,7 +14,7 @@ handler = Handler("")
 
 bot = TeleBot(
     token=getenv("telegram-api-token"),
-    disable_web_page_preview=False,
+    disable_web_page_preview=True,
 )
 
 bot.remove_webhook()
@@ -71,11 +72,17 @@ def text_is_required(func):
     return decorator
 
 
+def get_thumbnail(video_id):
+    resp = requests.get(f"https://i.ytimg.com/vi/{video_id}/0.jpg")
+    return resp.content
+
+
 def make_media_info(meta: dict) -> str:
     info = (
         f"Title : {meta.get('title')}\n"
         f"Size : {meta.get('size')}\n"
         f"Quality : {meta.get('q')}({meta.get('f')})\n"
+        f"ID : {meta.get('vid')}\n"
         f"Download : [Click Me]({meta.get('dlink')})"
     )
     return info
@@ -107,6 +114,7 @@ def download_and_send_audio_file(message: Message):
     bot.send_audio(
         message.chat.id,
         open(saved_to, "rb"),
+        thumbnail=get_thumbnail(third_dict.get("vid")),
         title=third_dict.get("title", "Unknown title"),
     )
     try:
@@ -131,7 +139,10 @@ def download_and_send_video_file(message: Message):
     bot.send_chat_action(message.chat.id, "upload_video")
     saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
     bot.send_video(
-        message.chat.id, open(saved_to, "rb"), caption=third_dict.get("title")
+        message.chat.id,
+        open(saved_to, "rb"),
+        caption=third_dict.get("title"),
+        thumbnail=get_thumbnail(third_dict.get("vid")),
     )
     try:
         remove(saved_to)
@@ -178,4 +189,4 @@ bot.add_custom_filter(IsAdminFilter())
 
 if __name__ == "__main__":
     print("Infinity polling ...")
-    bot.infinity_polling(timeout=10 * 60, long_polling_timeout=10 * 60)
+    bot.infinity_polling(timeout=60 * 60, long_polling_timeout=60 * 60)
