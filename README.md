@@ -18,4 +18,4 @@ Fire up the server : `$ python main.py`
 
 ---
 
-<p align="center">Made with love.</p>
+<p align="center">Made with love ❤️.</p>

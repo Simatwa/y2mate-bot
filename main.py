@@ -43,10 +43,10 @@ available_qualities = (
 )
 
 usage_info = (
-    "Download youtube videos and audios :\n"
+    "Download youtube videos and audios.\n"
     "Available commands : \n"
-    "/audio - Download only the audio of a video.\n"
-    "/video - Download video\n"
+    "/audio - Download only the audio 🎵 of a video.\n"
+    "/video - Download video  🎬 \n"
     "/quality - Set new video quality.\n\n"
     "Just append video title/id/url to these commands.\n\n"
     "Made with love by [Smartwa](https://github.com/Simatwa) from Kenya 🇰🇪"
@@ -190,6 +190,12 @@ def show_users_count_to_admin(message: Message):
 @bot.message_handler(commands=["myid"])
 def echo_user_telegram_id(message: Message):
     bot.reply_to(message, f"Your telegram ID is : {message.from_user.id}")
+
+
+@bot.message_handler(func=lambda: True)
+def any_other_action(message: Message):
+    """ "Unknown action"""
+    bot.reply_to(message, usage_info, parse_mode="Markdown")
 
 
 class IsAdminFilter(SimpleCustomFilter):
