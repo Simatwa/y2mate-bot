@@ -1,3 +1,8 @@
+if [[ -d y2mate-bot ]]; then
+  rm y2mate-bot -rf
+
+fi
+
 git clone https://github.com/Simatwa/y2mate-bot.git
 cp .env y2mate-bot/
 cd y2mate-bot
