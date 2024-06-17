@@ -45,7 +45,7 @@ available_qualities = (
 )
 
 usage_info = (
-    "Download youtube videos and audios.\n\n"
+    "Download YouTube videos and audios.\n\n"
     "Available commands : \n"
     "/audio - Download only the audio 🎵 of a video.\n"
     "/video - Download video  🎬 \n"
