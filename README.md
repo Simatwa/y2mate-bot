@@ -6,7 +6,7 @@
 
 ```sh
 git clone https://github.com/Simatwa/y2mate-bot.git
-cd y2mate-git
+cd y2mate-bot
 pip install -r requirements.txt
 ```
 
