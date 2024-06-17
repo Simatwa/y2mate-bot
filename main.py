@@ -66,6 +66,7 @@ def text_is_required(func):
             bot.reply_to(message, f"Text is required!")
         else:
             try:
+                bot.send_chat_action(message.chat.id, "typing")
                 return func(message)
             except Exception as e:
                 bot.reply_to(
@@ -78,6 +79,7 @@ def text_is_required(func):
 
 def get_thumbnail(video_id):
     resp = requests.get(f"https://i.ytimg.com/vi/{video_id}/0.jpg")
+    resp.raise_for_status()
     return resp.content
 
 
