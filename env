@@ -3,3 +3,4 @@ telegram-admin-id=
 file-size-limit=200
 
 ## Text live bot with command /myid to get your Telegram id
+## file size limit is in MB
