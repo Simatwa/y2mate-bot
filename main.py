@@ -2,12 +2,14 @@ from telebot import TeleBot
 from telebot.types import Message
 from telebot.custom_filters import SimpleCustomFilter
 from telebot.util import extract_arguments
-from y2mate_api import first_query, second_query, third_query
+from y2mate_api import first_query, second_query, third_query, appdir, Handler
 from dotenv import load_dotenv
-from os import getenv
+from os import getenv, remove
 from json import dumps
 
 load_dotenv()
+
+handler = Handler("")
 
 bot = TeleBot(
     token=getenv("telegram-api-token"),
@@ -42,9 +44,11 @@ usage_info = (
     "Available commands : \n"
     "/audio - Download only the audio of  a video.\n"
     "/video - Download video\n"
-    "/quality - Set new video quality\n."
+    "/quality - Set new video quality.\n\n"
     "Just append video title/id/url to these commands."
 )
+
+cache_dir = appdir.user_cache_dir
 
 
 def text_is_required(func):
@@ -60,6 +64,7 @@ def text_is_required(func):
 
 
 def make_media_info(meta: dict) -> str:
+    print(meta)
     info = (
         f"Title : {meta.get('title')}\n"
         f"Size : {meta.get('size')}\n"
@@ -85,10 +90,21 @@ def download_and_send_audio_file(message: Message):
     sq = second_query(fq).main()
     third_dict = third_query(sq).main(format="mp3")
     metadata["AUDIO_DOWNLOADS"] += 1
-    return bot.send_message(
+    bot.send_message(
         message.chat.id,
         make_media_info(third_dict),
     )
+    bot.send_chat_action(message.chat.id, "upload_audio")
+    saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
+    bot.send_audio(
+        message.chat.id,
+        open(saved_to, "rb"),
+        title=third_dict.get("title", "Unknown title"),
+    )
+    try:
+        remove(saved_to)
+    except:
+        pass
 
 
 @bot.message_handler(commands=["video"])
@@ -100,10 +116,21 @@ def download_and_send_video_file(message: Message):
     sq = second_query(fq).main()
     user_video_quality = quality.get(message.from_user.id, "720p")
     third_dict = third_query(sq).main(format="mp4", quality=user_video_quality)
-    return bot.send_message(
+    metadata["VIDEO_DOWNLOADS"] += 1
+    bot.send_message(
         message.chat.id,
         make_media_info(third_dict),
     )
+    bot.send_chat_action(message.chat.id, "upload_video")
+    saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
+    bot.send_video(
+        message.chat.id,
+        open(saved_to, "rb"),
+    )
+    try:
+        remove(saved_to)
+    except:
+        pass
 
 
 @bot.message_handler(commands=["quality"])
