@@ -21,6 +21,8 @@ bot.remove_webhook()
 
 admin_id = int(getenv("telegram-admin-id", 0))
 
+file_size_limit = int(getenv("file-size-limit", 200))
+
 quality: dict[int, str] = {}
 
 metadata = {
@@ -43,12 +45,13 @@ available_qualities = (
 )
 
 usage_info = (
-    "Download youtube videos and audios.\n"
+    "Download youtube videos and audios.\n\n"
     "Available commands : \n"
     "/audio - Download only the audio 🎵 of a video.\n"
     "/video - Download video  🎬 \n"
     "/quality - Set new video quality.\n\n"
     "Just append video title/id/url to these commands.\n\n"
+    f"Telegram downloads will be possible for files under {file_size_limit}MB\n\n"
     "Made with love by [Smartwa](https://github.com/Simatwa) from Kenya 🇰🇪"
 )
 
@@ -76,6 +79,12 @@ def text_is_required(func):
 def get_thumbnail(video_id):
     resp = requests.get(f"https://i.ytimg.com/vi/{video_id}/0.jpg")
     return resp.content
+
+
+def is_within_size_limit(third_dict: dict) -> bool:
+    """Checks if media file is within the limits"""
+    size = third_dict.get("size", "500 MB").split(" ")[0]
+    return int(size) <= file_size_limit
 
 
 def make_media_info(meta: dict) -> str:
@@ -110,6 +119,9 @@ def download_and_send_audio_file(message: Message):
         make_media_info(third_dict),
         parse_mode="Markdown",
     )
+    if not is_within_size_limit(third_dict):
+        return
+
     bot.send_chat_action(message.chat.id, "upload_audio")
     saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
     try:
@@ -145,6 +157,10 @@ def download_and_send_video_file(message: Message):
     bot.send_message(
         message.chat.id, make_media_info(third_dict), parse_mode="Markdown"
     )
+
+    if not is_within_size_limit(third_dict):
+        return
+
     bot.send_chat_action(message.chat.id, "upload_video")
     try:
         saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
