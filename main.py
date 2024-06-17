@@ -45,10 +45,11 @@ available_qualities = (
 usage_info = (
     "Download youtube videos and audios :\n"
     "Available commands : \n"
-    "/audio - Download only the audio of  a video.\n"
+    "/audio - Download only the audio of a video.\n"
     "/video - Download video\n"
     "/quality - Set new video quality.\n\n"
-    "Just append video title/id/url to these commands."
+    "Just append video title/id/url to these commands.\n\n"
+    "Made with love by [Smartwa](https://github.com/Simatwa) from Kenya 🇰🇪"
 )
 
 cache_dir = appdir.user_cache_dir
@@ -82,7 +83,7 @@ def make_media_info(meta: dict) -> str:
         f"Title : {meta.get('title')}\n"
         f"Size : {meta.get('size')}\n"
         f"Quality : {meta.get('q')}({meta.get('f')})\n"
-        f"ID : {meta.get('vid')}\n"
+        f"Video ID : {meta.get('vid')}\n"
         f"Download : [Click Me]({meta.get('dlink')})"
     )
     return info
@@ -92,7 +93,7 @@ def make_media_info(meta: dict) -> str:
 def echo_usage_info(message: Message):
     """Send back usage info"""
     metadata["TOTAL_USERS"] += 1
-    bot.reply_to(message, usage_info)
+    bot.reply_to(message, usage_info, parse_mode="Markdown")
 
 
 @bot.message_handler(commands=["audio"])
@@ -111,16 +112,24 @@ def download_and_send_audio_file(message: Message):
     )
     bot.send_chat_action(message.chat.id, "upload_audio")
     saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
-    bot.send_audio(
-        message.chat.id,
-        open(saved_to, "rb"),
-        thumbnail=get_thumbnail(third_dict.get("vid")),
-        title=third_dict.get("title", "Unknown title"),
-    )
     try:
-        remove(saved_to)
-    except:
-        pass
+        saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
+        bot.send_audio(
+            message.chat.id,
+            open(saved_to, "rb"),
+            thumbnail=get_thumbnail(third_dict.get("vid")),
+            title=third_dict.get("title", "Unknown title"),
+        )
+    except Exception as e:
+        bot.reply_to(
+            message,
+            f"Error occurred - {e.args[1] if e.args and len(e.args)>1 else e}",
+        )
+    finally:
+        try:
+            remove(saved_to)
+        except:
+            pass
 
 
 @bot.message_handler(commands=["video"])
@@ -137,17 +146,24 @@ def download_and_send_video_file(message: Message):
         message.chat.id, make_media_info(third_dict), parse_mode="Markdown"
     )
     bot.send_chat_action(message.chat.id, "upload_video")
-    saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
-    bot.send_video(
-        message.chat.id,
-        open(saved_to, "rb"),
-        caption=third_dict.get("title"),
-        thumbnail=get_thumbnail(third_dict.get("vid")),
-    )
     try:
-        remove(saved_to)
-    except:
-        pass
+        saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
+        bot.send_video(
+            message.chat.id,
+            open(saved_to, "rb"),
+            caption=third_dict.get("title"),
+            thumbnail=get_thumbnail(third_dict.get("vid")),
+        )
+    except Exception as e:
+        bot.reply_to(
+            message,
+            f"Error occurred - {e.args[1] if e.args and len(e.args)>1 else e}",
+        )
+    finally:
+        try:
+            remove(saved_to)
+        except:
+            pass
 
 
 @bot.message_handler(commands=["quality"])
