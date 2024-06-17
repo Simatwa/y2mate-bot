@@ -76,7 +76,7 @@ def make_media_info(meta: dict) -> str:
         f"Title : {meta.get('title')}\n"
         f"Size : {meta.get('size')}\n"
         f"Quality : {meta.get('q')}({meta.get('f')})\n"
-        f"dlink : [Download]({meta.get('dlink')})"
+        f"Download : [Click Me]({meta.get('dlink')})"
     )
     return info
 
@@ -178,4 +178,4 @@ bot.add_custom_filter(IsAdminFilter())
 
 if __name__ == "__main__":
     print("Infinity polling ...")
-    bot.infinity_polling()
+    bot.infinity_polling(timeout=10 * 60, long_polling_timeout=10 * 60)
