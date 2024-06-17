@@ -16,6 +16,8 @@ bot = TeleBot(
     disable_web_page_preview=False,
 )
 
+bot.remove_webhook()
+
 admin_id = int(getenv("telegram-admin-id", 0))
 
 quality: dict[int, str] = {}
