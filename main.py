@@ -60,7 +60,13 @@ def text_is_required(func):
         if not extract_arguments(message.text):
             bot.reply_to(message, f"Text is required!")
         else:
-            return func(message)
+            try:
+                return func(message)
+            except Exception as e:
+                bot.reply_to(
+                    message,
+                    f"Error occurred - {e.args[1] if e.args and len(e.args)>1 else e}",
+                )
 
     return decorator
 
