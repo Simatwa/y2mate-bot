@@ -125,9 +125,10 @@ def download_and_send_audio_file(message: Message):
         return
 
     bot.send_chat_action(message.chat.id, "upload_audio")
-    saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
     try:
-        saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
+        saved_to = handler.save(
+            third_dict, cache_dir, progress_bar=False, disable_history=True
+        )
         bot.send_audio(
             message.chat.id,
             open(saved_to, "rb"),
@@ -165,7 +166,9 @@ def download_and_send_video_file(message: Message):
 
     bot.send_chat_action(message.chat.id, "upload_video")
     try:
-        saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
+        saved_to = handler.save(
+            third_dict, cache_dir, progress_bar=False, disable_history=True
+        )
         bot.send_video(
             message.chat.id,
             open(saved_to, "rb"),
