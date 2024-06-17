@@ -1,0 +1,136 @@
+from telebot import TeleBot
+from telebot.types import Message
+from telebot.custom_filters import SimpleCustomFilter
+from telebot.util import extract_arguments
+from y2mate_api import first_query, second_query, third_query
+from dotenv import load_dotenv
+from os import getenv
+from json import dumps
+
+load_dotenv()
+
+bot = TeleBot(
+    token=getenv("telegram-api-token"),
+    disable_web_page_preview=False,
+)
+
+admin_id = int(getenv("telegram-admin-id", 0))
+
+quality: dict[int, str] = {}
+
+metadata = {
+    "TOTAL_USERS": 0,
+    "AUDIO_DOWNLOADS": 0,
+    "VIDEO_DOWNLOADS": 0,
+}
+
+available_qualities = (
+    "4k",
+    "1080p",
+    "720p",
+    "480p",
+    "360p",
+    "240p",
+    "144p",
+    "auto",
+    "best",
+    "worst",
+)
+
+usage_info = (
+    "Download youtube videos and audios :\n"
+    "Available commands : \n"
+    "/audio - Download only the audio of  a video.\n"
+    "/video - Download video\n"
+    "/quality - Set new video quality\n."
+    "Just append video title/id/url to these commands."
+)
+
+
+def text_is_required(func):
+    """Decorator to ensure commands are followed by a value"""
+
+    def decorator(message: Message):
+        if not extract_arguments(message.text):
+            bot.reply_to(message, f"Text is required!")
+        else:
+            return func(message)
+
+    return decorator
+
+
+@bot.message_handler(commands=["start"])
+def echo_usage_info(message: Message):
+    """Send back usage info"""
+    metadata["TOTAL_USERS"] += 1
+    bot.reply_to(message, usage_info)
+
+
+@bot.message_handler(commands=["audio"])
+@text_is_required
+def download_and_send_audio_file(message: Message):
+    """Sends audio version of a video"""
+    query = extract_arguments(message.text)
+    fq = first_query(query).main()
+    sq = second_query(query).main()
+    third_dict = third_query(sq).main(format="mp3")
+    metadata["AUDIO_DOWNLOADS"] += 1
+    return bot.send_message(
+        message.chat.id,
+        f"Title : {third_dict['title']} \n Link : {third_dict['dlink']}",
+    )
+
+
+@bot.message_handler(commands=["video"])
+@text_is_required
+def download_and_send_video_file(message: Message):
+    """Sends video"""
+    query = extract_arguments(message.text)
+    fq = first_query(query).main()
+    sq = second_query(query).main()
+    user_video_quality = quality.get(message.from_user.id, "720p")
+    third_dict = third_query(sq).main(format="mp4", quality=user_video_quality)
+    return bot.send_message(
+        message.chat.id,
+        f"Title : {third_dict['title']} \nQuality: {user_video_quality}\nLink : {third_dict['dlink']}",
+    )
+
+
+@bot.message_handler(commands=["quality"])
+@text_is_required
+def set_new_video_quality(message: Message):
+    """Set Video quality"""
+    text = extract_arguments(message.text)
+    if text in available_qualities:
+        quality[message.from_user.id] = text
+        bot.reply_to(message, "New video quality set : " + text)
+    else:
+        bot.reply_to(
+            message, f'Qualities should be one of : [{", ".join(available_qualities)}]'
+        )
+
+
+@bot.message_handler(commands=["stats"], is_admin=True)
+def show_users_count_to_admin(message: Message):
+    bot.send_message(message.chat.id, f"```json\n{dumps(metadata)}\n```")
+
+
+@bot.message_handler(commands=["myid"])
+def echo_user_telegram_id(message: Message):
+    bot.reply_to(message, f"Your telegram ID is : {message.from_user.id}")
+
+
+class IsAdminFilter(SimpleCustomFilter):
+
+    key: str = "is_admin"
+
+    @staticmethod
+    def check(message: Message):
+        return message.from_user.id == admin_id
+
+
+bot.add_custom_filter(IsAdminFilter())
+
+if __name__ == "__main__":
+    print("Infinity polling ...")
+    bot.infinity_polling()
