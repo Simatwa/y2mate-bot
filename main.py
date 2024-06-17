@@ -21,7 +21,7 @@ bot.remove_webhook()
 
 admin_id = int(getenv("telegram-admin-id", 0))
 
-file_size_limit = int(getenv("file-size-limit", 200))
+file_size_limit = float(getenv("file-size-limit", 200))
 
 quality: dict[int, str] = {}
 
@@ -84,7 +84,7 @@ def get_thumbnail(video_id):
 def is_within_size_limit(third_dict: dict) -> bool:
     """Checks if media file is within the limits"""
     size = third_dict.get("size", "500 MB").split(" ")[0]
-    return int(size) <= file_size_limit
+    return float(size) <= file_size_limit
 
 
 def make_media_info(meta: dict) -> str:
