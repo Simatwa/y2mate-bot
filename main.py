@@ -76,7 +76,7 @@ def make_media_info(meta: dict) -> str:
     info = (
         f"Title : {meta.get('title')}\n"
         f"Size : {meta.get('size')}\n"
-        f"Quality : {meta.get('q_text')}\n"
+        f"Quality : {meta.get('q')}({meta.get('f')})\n"
         f"dlink : {meta.get('dlink')}"
     )
     return info
@@ -132,8 +132,7 @@ def download_and_send_video_file(message: Message):
     bot.send_chat_action(message.chat.id, "upload_video")
     saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
     bot.send_video(
-        message.chat.id,
-        open(saved_to, "rb"),
+        message.chat.id, open(saved_to, "rb"), caption=third_dict.get("title")
     )
     try:
         remove(saved_to)
