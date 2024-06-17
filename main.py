@@ -72,12 +72,11 @@ def text_is_required(func):
 
 
 def make_media_info(meta: dict) -> str:
-    print(meta)
     info = (
         f"Title : {meta.get('title')}\n"
         f"Size : {meta.get('size')}\n"
         f"Quality : {meta.get('q')}({meta.get('f')})\n"
-        f"dlink : {meta.get('dlink')}"
+        f"dlink : [Download]({meta.get('dlink')})"
     )
     return info
 
@@ -101,6 +100,7 @@ def download_and_send_audio_file(message: Message):
     bot.send_message(
         message.chat.id,
         make_media_info(third_dict),
+        parse_mode="Markdown",
     )
     bot.send_chat_action(message.chat.id, "upload_audio")
     saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
@@ -126,8 +126,7 @@ def download_and_send_video_file(message: Message):
     third_dict = third_query(sq).main(format="mp4", quality=user_video_quality)
     metadata["VIDEO_DOWNLOADS"] += 1
     bot.send_message(
-        message.chat.id,
-        make_media_info(third_dict),
+        message.chat.id, make_media_info(third_dict), parse_mode="Markdown"
     )
     bot.send_chat_action(message.chat.id, "upload_video")
     saved_to = handler.save(third_dict, cache_dir, progress_bar=False)
