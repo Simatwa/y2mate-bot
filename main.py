@@ -86,17 +86,17 @@ def get_thumbnail(video_id):
 def is_within_size_limit(third_dict: dict) -> bool:
     """Checks if media file is within the  size limit"""
     size: str = third_dict.get("size", "MB").split(" ")[0]
-    return False if not size.isdigit() else float(size) <= file_size_limit
+    return False if not size[0].isdigit() else float(size) <= file_size_limit
 
 
 def make_media_info(meta: dict) -> str:
     info = (
         f"Title : {meta.get('title')}\n"
+        f"Channel : {meta.get('author')}\n"
         f"Size : {meta.get('size')}\n"
         f"Quality : {meta.get('q')}({meta.get('f')})\n"
-        f"Author : {meta.get('author')}\n"
         f"Video ID : {meta.get('vid')}\n"
-        f"Download : [Link]({meta.get('dlink')})\n"
+        f"Download : [Click Me]({meta.get('dlink')})\n"
         f"Uploading : {'Yes' if meta.get('download_required') else 'No'}"
     )
     return info
